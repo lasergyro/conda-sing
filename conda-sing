@@ -33,7 +33,6 @@ function cond(){
 		done < <(parse packages.txt)
 	}
 
-
 	args_common(){
 		ARGS_CHANNELS=""
 		while IFS= read -r line; do
@@ -77,12 +76,10 @@ function cond(){
 				rm -rdf ./.conda
 			fi
 			mamba create $(args_common) "$@"
-
 			grep -qxF '.conda/' .gitignore || echo '.conda/' >> .gitignore
 			;;
 		update)
-			mamba install $(args_common) "$@"
-			mamba update $(args_common) --prune "$@"
+			cond create
 			;;
 		freeze)
 			mamba list --prefix ./.conda --explicit > spec-file.txt

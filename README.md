@@ -95,3 +95,9 @@ This will update the environment, write over ./spec-file.txt and ./Singularity, 
 ### Replicating the environment:
 Run `conda-sing conda replicate`. This will read the spec-file and recreate the environment exactly.
 
+
+## Development Notes
+
+### Incremental changes to environment
+`conda env` has a --prune flag to remove files, however it considers `conda install` history (
+https://github.com/conda/conda/issues/7279 ), so `conda-sing conda update` currently recreates the entire environment by calling `conda-sing conda create`.
