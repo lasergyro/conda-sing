@@ -94,3 +94,4 @@ This will update the environment, write over ./spec-file.txt and ./Singularity, 
 
 ### Replicating the environment:
 Run `conda-sing conda replicate`. This will read the spec-file and recreate the environment exactly.
+
