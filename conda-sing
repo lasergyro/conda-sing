@@ -42,7 +42,7 @@ function cond(){
 		echo "--prefix ./.conda --file packages.txt --no-pin --strict-channel-priority --override-channels $ARGS_CHANNELS"
 	}
 
-	USAGE="conda create|install|update|freeze|check"
+	USAGE="conda create|install|update|freeze|check|replicate"
 	if [ "$#" == "0" ]; then
 		echo "$USAGE"
 		exit 1
@@ -92,6 +92,12 @@ function cond(){
 				echo "uncommited container definition"
 				exit 1
 			fi
+			;;
+		replicate)
+			if [ -d ./.conda ]; then
+				rm -rdf ./.conda
+			fi
+			mamba create --prefix ./.conda --file spec-file.txt
 			;;
 		*)
 			echo "unrecognized mode $mode"
