@@ -8,12 +8,12 @@ Build is done remotely on sylabs.io. Tested on Linux and WSL2.
 
 ## Typical usage:
 
-Put this directory on PATH.
+Put `./conda-sing` on PATH.
 
 ### Conda:
 - Install conda (e.g. https://docs.conda.io/en/latest/miniconda.html )
 - Cd to your code repo
-- Create empty environment with (`conda-sing conda create` )
+- Create empty environment with (`conda-sing conda update` )
 - Add environment to gitignore `echo '.conda/' >> '.gitignore'`
 - Edit channels.txt and packages.txt and run `conda-sing conda update`
 - Run `conda-sing conda freeze` to freeze environment to spec-file.txt
@@ -100,4 +100,6 @@ Run `conda-sing conda replicate`. This will read the spec-file and recreate the 
 
 ### Incremental changes to environment
 `conda env` has a --prune flag to remove files, however it considers `conda install` history (
-https://github.com/conda/conda/issues/7279 ), so `conda-sing conda update` currently recreates the entire environment by calling `conda-sing conda create`.
+https://github.com/conda/conda/issues/7279 ).
+`conda-sing conda update` currently parses `packages.txt` and the conda environment state to find unused packages, which it then uninstalls.
+This is experimental and might break easily, in which case delete `./.conda` first.
