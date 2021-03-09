@@ -16,7 +16,10 @@ def bash(cmd:str):
     return subprocess.run(cmd,shell=True,executable='/bin/bash',check=True)
 
 def parse_spec(spec:str):
-    return re.match('^(?:(?P<channel>.*)::)?(?P<name>\w+)(?P<version>[<>=]+[^\n]+)?$',spec).groupdict()
+    m = re.match('^(?:(?P<channel>.*)::)?(?P<name>[\w-]+)(?P<version>[<>=]+[^\n]+)?$',spec)
+    if m is None:
+        raise ValueError(f"\"{spec}\" not recognized")
+    return m.groupdict()
 
 def get_local_cache(prefix):
     return conda.exports.linked_data(prefix=prefix)
@@ -85,7 +88,7 @@ def prune(env):
     bash(remove_cmd)
 
 def write_pin(env):
-    with (Path(env['prefix'])/'conda-meta/pinned').open('w') as f:
+    with (Path(env['prefix']).expanduser()/'conda-meta/pinned').open('w') as f:
         for spec in env['dependencies']:
             d=parse_spec(spec)
             if d['version'] or d['channel']:
@@ -110,7 +113,7 @@ def create(env):
     bash(cmd)
 
 def update(env):
-    p=Path(env['prefix'])/'conda-meta/pinned'
+    p=Path(env['prefix']).expanduser()/'conda-meta/pinned'
     if p.exists():
         p.unlink()
     args = [
@@ -141,7 +144,7 @@ def update(env):
     bash(cmd)
 
 def sync(env):
-    if not Path(env['prefix']).exists():
+    if not Path(env['prefix']).expanduser().exists():
         create(env)
     else:
         prune(env)
@@ -196,7 +199,7 @@ def main(sys_args):
     elif mode=='freeze':
         bash(f"mamba list --prefix {env['prefix']} --explicit > spec-file.txt")
     elif mode=='replicate':
-        if Path(env['prefix']).exists():
+        if Path(env['prefix']).expanduser().exists():
             bash(f"rm -rdf {env['prefix']}")
         bash(f"mamba create --prefix {env['prefix']} --file spec-file.txt")
     else:
