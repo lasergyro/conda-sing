@@ -12,10 +12,11 @@ Put `./conda-sing` on PATH.
 
 ### Conda:
 - Install conda (e.g. https://docs.conda.io/en/latest/miniconda.html )
+- In your base environment install mamba, networkx and yaml.
 - Cd to your code repo
 - Create empty environment with (`conda-sing conda update` )
 - Add environment to gitignore `echo '.conda/' >> '.gitignore'`
-- Edit channels.txt and packages.txt and run `conda-sing conda update`
+- Edit environment.yml and run `conda-sing conda update`
 - Run `conda-sing conda freeze` to freeze environment to spec-file.txt
 
 ### Singularity:
@@ -86,7 +87,7 @@ mkdir -p $SINGULARITY_PULLFOLDER
 			- `mpirun <mpir args> conda-sing sing exec <executable> <args...>`
 
 ### Editing the environment:
-After editing packages.txt or channels.txt, run `conda-sing conda update`.
+After editing environment.yml, run `conda-sing conda update`.
 
 Once done testing locally, run `conda-sing upgrade`.
 
@@ -101,5 +102,5 @@ Run `conda-sing conda replicate`. This will read the spec-file and recreate the 
 ### Incremental changes to environment
 `conda env` has a --prune flag to remove files, however it considers `conda install` history (
 https://github.com/conda/conda/issues/7279 ).
-`conda-sing conda update` currently parses `packages.txt` and the conda environment state to find unused packages, which it then uninstalls.
+`conda-sing conda update` currently parses `environment.yml` and the conda environment state to find unused packages, which it then uninstalls.
 This is experimental and might break easily, in which case delete `./.conda` first.
