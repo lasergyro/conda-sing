@@ -15,53 +15,9 @@ function cond(){
 
 	export MAMBA_NO_BANNER=1
 	export ENV_PREFIX="./.conda"
-	
+
 	parse(){
 		grep -vE '^(\s*$|#)' "$1"
-	}
-
-	write_environment(){
-		> environment.yml
-		echo "channels:" >> environment.yml
-
-		while IFS= read -r line ; do
-			echo " - $line" >> environment.yml
-		done < <(parse channels.txt)
-
-		echo "dependencies:" >> environment.yml
-		while IFS= read -r line ; do
-			echo " - $line" >> environment.yml
-		done < <(parse packages.txt)
-	}
-
-	args_channels(){
-		ARGS_CHANNELS=""
-		while IFS= read -r line; do
-			ARGS_CHANNELS+=" -c $line"
-		done < <(parse channels.txt)
-		echo $ARGS_CHANNELS
-	}
-	args_base(){
-		echo "--file packages.txt --no-pin --strict-channel-priority --override-channels $(args_channels)"
-	}
-
-	update-prune(){
-
-		# echo $a
-		# mamba list --prefix "$ENV_PREFIX" --json > $a/curr.txt
-		# conda-tree --prefix "$ENV_PREFIX" leaves > $a/curr.txt
-
-		# conda env export --json --prefix "$ENV_PREFIX" --from-history > $a/curr.json
-
-		# mamba create $(args_base) --prefix $a/notexist --dry-run --json > $a/target.json
-
-		$DIR/prune.py "$@"
-		
-		mamba install $(args_base) --update-specs --prefix "$ENV_PREFIX" "$@"
-		
-		
-		# mamba update $(args_base) --use-index-cache --all --prefix "$ENV_PREFIX" "$@"
-
 	}
 
 	USAGE="conda update|freeze|check|replicate"
@@ -73,37 +29,10 @@ function cond(){
 	mode="$1"; shift
 	case "$mode" in
 		update)
-			if ! ( command -v mamba ) &> /dev/null ; then
-				conda install -y -c conda-forge
-			fi
-
-			DEFAULT_CHANNELS=$(cat <<-'EOF'
-			conda-forge
-			defaults
-			nodefaults
-			EOF
-			)
-			
-			DEFAULT_PACKAGES=$(cat <<-'EOF'
-			python
-			EOF
-			)	
-
-			if [ ! -f channels.txt ]; then
-				echo "$DEFAULT_CHANNELS" > channels.txt
-			fi
-			if [ ! -f packages.txt ]; then
-				echo "$DEFAULT_PACKAGES" > packages.txt
-			fi
-			if [ ! -d "$ENV_PREFIX" ]; then
-				mamba create --prefix "$ENV_PREFIX" $(args_base) --no-default-packages "$@"
-			else
-				update-prune
-			fi
-			
+			$DIR/conda_sync.py sync "$@"
 			;;
 		freeze)
-			mamba list --prefix "$ENV_PREFIX" --explicit > spec-file.txt
+			$DIR/conda_sync.py freeze "$@"
 			;;
 		check)
 			if [ ! "$(git status --porcelain spec-file.txt)" == "" ]; then
@@ -112,10 +41,7 @@ function cond(){
 			fi
 			;;
 		replicate)
-			if [ -d "$ENV_PREFIX" ]; then
-				rm -rdf "$ENV_PREFIX"
-			fi
-			mamba create --prefix "$ENV_PREFIX" --file spec-file.txt
+			$DIR/conda_sync.py replicate "$@"
 			;;
 		*)
 			echo "unrecognized mode $mode"
