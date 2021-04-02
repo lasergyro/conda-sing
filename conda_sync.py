@@ -59,6 +59,8 @@ def prune(env):
             return d['key'].channel=='<develop>'
             
     to_keep|=set(filter(is_develop,g.nodes))
+    
+    print(f"{to_keep=}")
 
     def flood(g, nodes):
         marked = set()
@@ -105,6 +107,7 @@ def args_base(env):
     return args
 
 def create(env):
+    print(f"Creating {env['prefix']}")
     args = [
         "--no-default-packages",
         *args_base(env),
@@ -113,6 +116,7 @@ def create(env):
     bash(cmd)
 
 def update(env):
+    print(f"Updating {env['prefix']}")
     p=Path(env['prefix']).expanduser()/'conda-meta/pinned'
     if p.exists():
         p.unlink()
@@ -192,6 +196,10 @@ def main(sys_args):
         env['prefix']=args.prefix
     if 'prefix' not in env:
         env['prefix']='./.conda'
+    if '~' in env['prefix']:
+        assert env['prefix'][:2]=='~/'
+        env['prefix']=str(Path.home()/(env['prefix'][2:]))
+    env['prefix']=str(Path(env['prefix']).absolute())
 
     mode : str = args.mode
     if mode=='sync':
