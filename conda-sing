@@ -60,7 +60,9 @@ function sing(){
 	if [ -L /dev/shm ]; then
 		if [ ! -d /run/shm ]; then echo "/run/shm is not a directory"; exit 1; fi
 		HAS_RUN=true
-	fi
+	else
+		HAS_RUN=false
+	fi	
 	if [[ "$HAS_RUN" == "true" ]]; then
 		BINDS+=',/run/shm:/run/shm' #https://github.com/hpcng/singularity/issues/875#issuecomment-349146305
 	fi

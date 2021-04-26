@@ -104,3 +104,4 @@ Run `conda-sing conda replicate`. This will read the spec-file and recreate the 
 https://github.com/conda/conda/issues/7279 ).
 `conda-sing conda update` currently parses `environment.yml` and the conda environment state to find unused packages, which it then uninstalls.
 This is experimental and might break easily, in which case delete `./.conda` first.
+
