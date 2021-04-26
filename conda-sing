@@ -72,7 +72,7 @@ function sing(){
 	#no-home and contain-all plus the BINDS above avoid global config files stored in ~ to affect the container
 	#pid fixes an issue with the psutils module
 	sudo_with_user_env(){
-		sudo bash -i -c "cd $(pwd); USER=$USER; HOME=$HOME; . ~/.bash_profile; $1"
+		sudo bash -i -c "cd $(pwd); export USER=$USER; export HOME=$HOME; . ~/.bash_profile; $1"
 	}
 
 	sing_exec(){
@@ -91,22 +91,44 @@ function sing(){
 		sing_exec "$1" "bash -l -c \"${@:2}\""
 	}
 
-	DEF="./Singularity"
+	SING_DIR="$(pwd)/.sing"
+
+
+	DEF="$SING_DIR/Singularity"
+	CFG="$SING_DIR/conf.sh"
+	TST="$SING_DIR/test.sh"
+
+	copy_templates(){
+		mkdir -p "$SING_DIR"
+		cp "$DIR/install_conda.sh" "$SING_DIR"
+		cp "$DIR/make_Singularity.sh" "$SING_DIR"
+		cat <<-EOF > "$CFG"
+		export SING_USER="sylabs_username"
+		export SING_COLLECTION="sylabs_collection"
+		export SING_NAME="repository_name"
+		EOF
+		cat <<-EOF > "$TST"
+		#!/bin/bash -l
+		python -c "print('python works')"
+		EOF
+		chmod +x "$TST"
+		echo "Edit conf.sh, optionally edit test.sh and make_Singularity.sh, in $SING_DIR"
+	}
 
 	make_def(){
-		$DIR/make_def.sh > $DEF
+		$SING_DIR/make_Singularity.sh > $DEF
 	}
 
 	calc_id(){
 		if [ -f "$DEF" ] && [ "$(git status --porcelain $DEF)" == ""  ] ; then
-			git rev-list -1 HEAD ./$DEF | xargs git rev-parse --short
+			git rev-list -1 HEAD $DEF | xargs git rev-parse --short
 		else
 			echo "untracked"
 		fi
 	}
 
-	if [ -f ./sing.config.sh ]; then
-		. ./sing.config.sh
+	if [ -f "$CFG" ]; then
+		. "$CFG"
 		ID=$(calc_id)
 		SING_LIB="library://${SING_USER}/${SING_COLLECTION}/${SING_NAME}"
 		TARGET="${SING_LIB}:$ID"
@@ -130,8 +152,10 @@ function sing(){
 				echo "building in $TMP"
 				SDBOX="$TMP/${IMG_NAME}"
 				IMG="$TMP/${IMG_NAME}.sif"
-				sudo_with_user_env "singularity build --sandbox $SDBOX $DEF"
-				sudo_with_user_env "singularity build $IMG $SDBOX"
+				sudo singularity build --no-cleanup --sandbox $SDBOX $DEF
+				sudo singularity build $IMG $SDBOX
+				# sudo_with_user_env "singularity build --sandbox $SDBOX $DEF"
+				# sudo_with_user_env "singularity build $IMG $SDBOX"
 				sudo rm -rdf $SDBOX
 				if [[ "$#" -ge 1 && "$1" == "sign" ]]; then
 					singularity sign --keyidx 0 --all $IMG
@@ -151,7 +175,7 @@ function sing(){
 					singularity sign --keyidx 0 --all $IMG
 					singularity push $IMG $TARGET
 					rm $IMG
-					rm -d ./tmp
+					rm -d $TMP
 				fi
 				;;
 			*)
@@ -174,21 +198,12 @@ function sing(){
 			mamba install -y singularity
 			;;
 		config)
-			if [ ! -f 'sing.config.sh' ]; then
-				cat <<-EOF > sing.config.sh
-				export SING_USER="sylabs_username"
-				export SING_COLLECTION="sylabs_collection"
-				export SING_NAME="repository_name"
-				EOF
-				cat <<-EOF > sing.test.sh
-				python -c "print('python works')"
-				EOF
-				chmod +x sing.test.sh
-				echo "Edit sing.config.sh, and sing.test.sh optionally."
+			if [ ! -f "$CFG" ]; then
+				copy_templates
 			fi
 			;;
 		*)
-			if [ ! -f 'sing.config.sh' ]; then
+			if [ ! -f "$CFG" ]; then
 				echo 'config missing. run `conda-sing sing config` first'
 				exit 1
 			else

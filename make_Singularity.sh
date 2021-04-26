@@ -32,14 +32,14 @@ From: ubuntu:18.04
 
 	$(inject "	" spec-file.txt spec-file.txt)
 
-	$(inject "	" $DIR/install.conda.container.sh install.conda.container.sh)
+	$(inject "	" .sing/install_conda.sh install_conda.sh)
 
 	apt-get update
 	apt-get -y upgrade
 
 	mkdir /pwd
 
-	. install.conda.container.sh
+	. install_conda.sh
 
 	apt-get autoremove --purge -y; apt-get clean -y
 	rm -rf /var/lib/{apt,dpkg,cache,log}
@@ -48,8 +48,8 @@ From: ubuntu:18.04
 	rm -rdf \$DIR
 
 	mkdir /test
-	$(inject "	" sing.test.sh /test/sing.test.sh)
-	chmod +x /test/sing.test.sh
+	$(inject "	" .sing/test.sh /test/test.sh)
+	chmod +x /test/test.sh
 
 	if [ -f /rm_run_shm ]; then 
 		rm /run/shm;
@@ -57,7 +57,7 @@ From: ubuntu:18.04
 	fi
 
 %test
-	bash -l -c '/test/sing.test.sh'
+	bash -l -c '/test/test.sh'
 
 %help
 	This container encapsulates a conda environment at /opt/conda.

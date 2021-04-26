@@ -91,7 +91,7 @@ After editing environment.yml, run `conda-sing conda update`.
 
 Once done testing locally, run `conda-sing upgrade`.
 
-This will update the environment, write over ./spec-file.txt and ./Singularity, complain and exit if they need to be commited, after which, if called again, will, if necessary, remake the container.
+This will update the environment, write over the conda spec-file and the container definition Singularity, complain and exit if they need to be commited, after which, if called again, will, if necessary, remake the container.
 
 ### Replicating the environment:
 Run `conda-sing conda replicate`. This will read the spec-file and recreate the environment exactly.

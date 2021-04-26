@@ -142,9 +142,10 @@ def update(env):
         f"--strict-channel-priority --override-channels",
         ' '.join(f"-c {c}" for c in itertools.chain(dep_channels,env['channels']))
     ]
-    args+=[ ('"'+d['channel']+':' if d['channel'] else '')+d['name']+'"' for d in map(parse_spec,env['dependencies'])]
+    args+=[ '"'+(d['channel']+':' if d['channel'] else '')+d['name']+'"' for d in map(parse_spec,env['dependencies'])]
 
     cmd = ' '.join(["mamba update",*args])
+    print(f'running:\n{cmd}')
     bash(cmd)
 
 def sync(env):
