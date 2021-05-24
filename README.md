@@ -17,12 +17,12 @@ Put `./conda-sing` on PATH.
 - Create empty environment with (`conda-sing conda update` )
 - Add environment to gitignore `echo '.conda/' >> '.gitignore'`
 - Edit environment.yml and run `conda-sing conda update`
-- Run `conda-sing conda freeze` to freeze environment to spec-file.txt
+- Run `conda-sing conda freeze` to freeze environment to `./spec-file.txt`
 
 ### Singularity:
 - Install singularity if not present ( `conda-sing sing install` )
-- Create an account on sylabs.io, create and save access token
-- Run `conda-sing sing config` and edit sing.config.sh accordingly
+- Create an account on sylabs.io, and create and save an access token.
+- Run `conda-sing sing config` and edit `/.sing/conf.sh` accordingly
 - Run `singularity remote login` and enter access token
 - Run `conda-sing sing freeze` to create the container definition.
 - Commit and push changes to repo: `git add . && git commit -m <message>`
@@ -54,9 +54,7 @@ mkdir -p $SINGULARITY_PULLFOLDER
 
 - Without the repo:
 	- On a login node:
-		- put contents of `sing.env.sh` in your .bash_profile
 		- run `singularity pull $TARGET`
-
 		- Test with `singularity exec $TARGET bash -l "python -i"`
 	- On a job
 		- use a login shell '#!/bin/bash -l"
