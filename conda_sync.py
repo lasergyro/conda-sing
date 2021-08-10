@@ -177,7 +177,9 @@ def sync(env):
         create(env)
     else:
         prune(env)
-        update(env)
+        bash(f"mamba env update --prefix {env['prefix']} --file environment.yml")
+        
+        # update(env)
 
 
 def main(sys_args):
