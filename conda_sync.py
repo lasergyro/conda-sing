@@ -52,23 +52,27 @@ def prune(env):
 
     spec2name = lambda s: parse_spec(s)["name"]
 
+    
     to_keep_user = set(map(spec2name, dependencies))
-    to_keep_system = set(["conda"])
-    to_keep = set([*to_keep_user, *to_keep_system])
+    print(f"{to_keep_user=}")
 
+    to_keep_system = set(["conda"])
+    print(f"{to_keep_system=}")
+
+    
     l = get_local_cache(prefix)
     g = make_cache_graph(l)
 
-    def is_develop(n):
+    def must_skip(n):
         d = g.nodes[n]
         if "key" not in d:
             return False
         else:
-            return d["key"].channel == "<develop>"
+            return d["key"].channel in ("<develop>","pypi")
 
-    to_keep |= set(filter(is_develop, g.nodes))
+    to_keep_must_skip = set(filter(must_skip, g.nodes))
 
-    print(f"{to_keep=}")
+    to_keep = set([*to_keep_user, *to_keep_system,*to_keep_must_skip])
 
     def flood(g, nodes):
         marked = set()
@@ -176,10 +180,12 @@ def sync(env):
     if not Path(env["prefix"]).expanduser().exists():
         create(env)
     else:
-        prune(env)
+        # mamba does not yet support prune
+        # https://github.com/mamba-org/mamba/issues/688
+        prune(env) 
+        # update(env)
         bash(f"mamba env update --prefix {env['prefix']} --file environment.yml")
         
-        # update(env)
 
 
 def main(sys_args):
