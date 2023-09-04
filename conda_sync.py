@@ -19,7 +19,7 @@ def bash(cmd: str):
 
 def parse_spec(spec: str):
     m = re.match(
-        "^(?:(?P<channel>.*)::)?(?P<name>[\w-]+)(?P<version>[<>=]+[^\n]+)?$", spec
+        r"^(?:(?P<channel>.*)::)?(?P<name>[\w-]+)(?P<version>[<>=]+[\w.]+)?(?P<build>[<>=]+[\w.]+)?$", spec
     )
     if m is None:
         raise ValueError(f'"{spec}" not recognized')
@@ -52,13 +52,16 @@ def prune(env):
 
     spec2name = lambda s: parse_spec(s)["name"]
 
-    
-    to_keep_user = set(map(spec2name, dependencies))
-    print(f"{to_keep_user=}")
+    def print_package_list(name,l):
+        print(name+' :')
+        for j in l:
+            print(f'  - {j}')
+        print()
+    to_keep_user = {k:True for k in map(spec2name, dependencies)}
+    print_package_list('to_keep_user',to_keep_user.keys())
 
-    to_keep_system = set(["conda"])
-    print(f"{to_keep_system=}")
-
+    to_keep_system = {"conda":True}
+    print_package_list('to_keep_system',to_keep_system.keys())
     
     l = get_local_cache(prefix)
     g = make_cache_graph(l)
@@ -93,7 +96,7 @@ def prune(env):
         return
     to_remove_roots = {n for n in to_remove if g.in_degree(n) == 0}
 
-    print(f"Roots of removal: {' '.join(to_remove_roots)}")
+    print_package_list('to_remove_roots',to_remove_roots)
 
     remove_cmd = f"mamba remove --no-pin --use-index-cache --override-channels {' '.join(f'-c {c}' for c in channels)} --prefix {env['prefix']} {' '.join(to_remove)}"
 
@@ -104,10 +107,10 @@ def write_pin(env):
     with (Path(env["prefix"]).expanduser() / "conda-meta/pinned").open("w") as f:
         for spec in env["dependencies"]:
             d = parse_spec(spec)
-            if d["version"] or d["channel"]:
+            if d["version"] or d["channel"] or d['build']:
                 c = d["channel"]
                 f.write(
-                    f"{c+'::' if c else ''}{d['name']}{d['version'] if d['version'] else ''}\n"
+                    f"{c+'::' if c else ''}{d['name']}{d['version'] if d['version'] else ''}{d['build'] if d['build'] else ''}\n"
                 )
 
 
@@ -128,6 +131,7 @@ def get_channel_specs(env):
         + (d["channel"] + "::" if d["channel"] else "")
         + d["name"]
         + (d["version"] if d["version"] else "")
+        + (d["build"] if d["build"] else "")
         + '"'
         for d in specs
     ]
@@ -223,9 +227,10 @@ def main(sys_args):
                 f,
             )
     assert file.exists()
-
     with file.open("r") as f:
         env = yaml.safe_load(f)
+        for d in env.get('dependencies',[]):
+            assert isinstance(d,str), f'list of dependencies is malformed, {d=} not a str'
 
     if args.prefix:
         env["prefix"] = args.prefix
